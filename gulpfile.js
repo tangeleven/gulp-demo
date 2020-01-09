@@ -12,7 +12,7 @@ var webserver = require('gulp-webserver'); // 本地服务器
 
 function cleanAll (done) {
     console.log(1111);
-    del(['dist/']).then(paths => {
+    del(['dist/'], {allowEmpty: true}).then(paths => {
         console.log('删除成功')
         done()
     })
@@ -24,21 +24,21 @@ function htmlCopy(done) {
             prefix: '@@',
             basepath: '@file'
         }))
-        .pipe(dest('dist/'))
+        .pipe(dest('dist/v/'))
 
     src('src/pages/**/*.html', {ignore: 'src/pages/includes/head.html'})
         .pipe(fileinclude({
             prefix: '@@',
             basepath: '@file'
         }))
-        .pipe(dest('dist/pages/'))
+        .pipe(dest('dist/v/pages/'))
         
         done();
 }
 
 function jsCopy(done) {
     src(['src/js/widget/**/*.*'])
-        .pipe(dest('dist/js/widget/'))
+        .pipe(dest('dist/v/js/widget/'))
 
         done()
 }
@@ -47,19 +47,19 @@ function jsConcat(done) {
     src(['src/js/base/*.js', 'src/js/utils/*.js', 'src/js/config.js'])
         .pipe(uglify())
         .pipe(concat('base.js'))
-        .pipe(dest('dist/js/'))
+        .pipe(dest('dist/v/js/'))
     
     src('src/*.js')
         .pipe(sourcemaps.init())
         .pipe(uglify())
         .pipe(sourcemaps.write())
-        .pipe(dest('dist/')) 
+        .pipe(dest('dist/v/')) 
         
     src('src/pages/**/*.js')
         .pipe(sourcemaps.init())
         .pipe(uglify())
         .pipe(sourcemaps.write())
-        .pipe(dest('dist/pages/'))    
+        .pipe(dest('dist/v/pages/'))    
 
         done()
 }
@@ -68,19 +68,19 @@ function cssConcat(done) {
     src(['src/css/base/*.css'])
         .pipe(concat('base.css'))
         .pipe(cleanCSS({compatibility: 'ie8'}))
-        .pipe(dest('dist/css/'))
+        .pipe(dest('dist/v/css/'))
     
     src('src/*.css')
         .pipe(sourcemaps.init())
         .pipe(cleanCSS({compatibility: 'ie8'}))
         .pipe(sourcemaps.write())
-        .pipe(dest('dist/'))
+        .pipe(dest('dist/v/'))
         
     src('src/pages/**/*.css')
         .pipe(sourcemaps.init())
         .pipe(cleanCSS({compatibility: 'ie8'}))
         .pipe(sourcemaps.write())
-        .pipe(dest('dist/pages/'))    
+        .pipe(dest('dist/v/pages/'))    
 
         done()
 }
@@ -98,6 +98,7 @@ function createWebserver(done) {
     console.log('开启服务')
     src( 'dist' )
         .pipe(webserver({
+            host: '10.0.64.31',
             livereload: true, // 启用LiveReload
             open: true, // 服务器启动时自动打开网页
         }))
@@ -105,7 +106,8 @@ function createWebserver(done) {
         done()
 }
 
-exports.default = series(htmlCopy, jsCopy, jsConcat, cssConcat, watcher, createWebserver);
+exports.dev = series(htmlCopy, jsCopy, jsConcat, cssConcat, watcher, createWebserver);
+// exports.dev = series(htmlCopy, jsCopy, jsConcat, cssConcat);
 
 exports.prod = series(cleanAll, htmlCopy, jsCopy, jsConcat, cssConcat)
 
