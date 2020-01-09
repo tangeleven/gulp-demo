@@ -1,5 +1,5 @@
 
-var { src, dest, series, watch } = require('gulp');
+var { src, dest, series, watch, parallel } = require('gulp');
 var del = require('del');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
@@ -34,6 +34,13 @@ function htmlCopy(done) {
         .pipe(dest('dist/pages/'))
         
         done();
+}
+
+function jsCopy(done) {
+    src(['src/js/widget/**/*.*'])
+        .pipe(dest('dist/js/widget/'))
+
+        done()
 }
 
 function jsConcat(done) {
@@ -78,43 +85,31 @@ function cssConcat(done) {
         done()
 }
 
-
-// var watcher = watch('src/pages/**/*.js');
-
-// watcher.on('change', function(path, stats) {
-//     console.log(`File ${path} was changed`);
-// })
-
 function watcher(done) {
-    console.log('开始打包')
-    
-    console.log('开始监听')
+
     watch(['src/js/base/*.js', 'src/js/utils/*.js', 'src/js/config.js', 'src/*.js', 'src/pages/**/*.js'], series(jsConcat))
     watch(['src/css/base/*.css', 'src/*.css', 'src/pages/**/*.css'], series(cssConcat))
     watch(['src/pages/**/*.html', 'src/*.html'], series(htmlCopy))
-    setTimeout(function() {
-        console.log('监听完成')
-        done()
-    },1000)
-    
+
+    done()
 }
 
 function createWebserver(done) {
+    console.log('开启服务')
     src( 'dist' )
         .pipe(webserver({
             livereload: true, // 启用LiveReload
             open: true, // 服务器启动时自动打开网页
-            open: '/pages/index/index.html'
         }))
 
         done()
 }
 
-exports.default = series(series(htmlCopy, jsConcat, cssConcat), watcher, createWebserver);
+exports.default = series(htmlCopy, jsCopy, jsConcat, cssConcat, watcher, createWebserver);
 
-exports.prod = series(cleanAll, htmlCopy, jsConcat, cssConcat)
+exports.prod = series(cleanAll, htmlCopy, jsCopy, jsConcat, cssConcat)
 
-exports.test = series(cleanAll, htmlCopy, jsConcat, cssConcat)
+exports.test = series(cleanAll, htmlCopy, jsCopy, jsConcat, cssConcat)
 
 
 
