@@ -1,38 +1,121 @@
-var { src, dest, series } = require('gulp');
-var uglify = require('gulp-uglify');
+
+var { src, dest, series, watch } = require('gulp');
 var del = require('del');
+var concat = require('gulp-concat');
+var uglify = require('gulp-uglify');
+var cleanCSS = require('gulp-clean-css');
+var fileinclude = require('gulp-file-include');
+var sourcemaps = require('gulp-sourcemaps');
+var livereload = require('gulp-livereload'); // 网页自动刷新（文件变动后即时刷新页面）
+var webserver = require('gulp-webserver'); // 本地服务器
 
-function cleanAll (cb) {
 
+function cleanAll (done) {
     console.log(1111);
-    del([
-        // 这里我们使用一个通配模式来匹配 `mobile` 文件夹中的所有东西
-        'dist/'
-    ]).then(paths => {
+    del(['dist/']).then(paths => {
         console.log('删除成功')
-        cb()
+        done()
     })
-
 }
 
-function copy(cb) {
-    console.log(2222);
-    src('src/pages/**/*.html')
+function htmlCopy(done) {
+    src('src/*.html')
+        .pipe(fileinclude({
+            prefix: '@@',
+            basepath: '@file'
+        }))
+        .pipe(dest('dist/'))
+
+    src('src/pages/**/*.html', {ignore: 'src/pages/includes/head.html'})
+        .pipe(fileinclude({
+            prefix: '@@',
+            basepath: '@file'
+        }))
         .pipe(dest('dist/pages/'))
-
-    cb()
-
+        
+        done();
 }
 
-function copyJS (cb) {
-    console.log(3333);
-    src('src/js/**/*.js')
+function jsConcat(done) {
+    src(['src/js/base/*.js', 'src/js/utils/*.js', 'src/js/config.js'])
+        .pipe(uglify())
+        .pipe(concat('base.js'))
         .pipe(dest('dist/js/'))
+    
+    src('src/*.js')
+        .pipe(sourcemaps.init())
+        .pipe(uglify())
+        .pipe(sourcemaps.write())
+        .pipe(dest('dist/')) 
+        
+    src('src/pages/**/*.js')
+        .pipe(sourcemaps.init())
+        .pipe(uglify())
+        .pipe(sourcemaps.write())
+        .pipe(dest('dist/pages/'))    
 
-    cb()
-
+        done()
 }
 
-exports.default = series( cleanAll, copyJS, copy)
+function cssConcat(done) {
+    src(['src/css/base/*.css'])
+        .pipe(concat('base.css'))
+        .pipe(cleanCSS({compatibility: 'ie8'}))
+        .pipe(dest('dist/css/'))
+    
+    src('src/*.css')
+        .pipe(sourcemaps.init())
+        .pipe(cleanCSS({compatibility: 'ie8'}))
+        .pipe(sourcemaps.write())
+        .pipe(dest('dist/'))
+        
+    src('src/pages/**/*.css')
+        .pipe(sourcemaps.init())
+        .pipe(cleanCSS({compatibility: 'ie8'}))
+        .pipe(sourcemaps.write())
+        .pipe(dest('dist/pages/'))    
+
+        done()
+}
+
+
+// var watcher = watch('src/pages/**/*.js');
+
+// watcher.on('change', function(path, stats) {
+//     console.log(`File ${path} was changed`);
+// })
+
+function watcher(done) {
+    console.log('开始打包')
+    
+    console.log('开始监听')
+    watch(['src/js/base/*.js', 'src/js/utils/*.js', 'src/js/config.js', 'src/*.js', 'src/pages/**/*.js'], series(jsConcat))
+    watch(['src/css/base/*.css', 'src/*.css', 'src/pages/**/*.css'], series(cssConcat))
+    watch(['src/pages/**/*.html', 'src/*.html'], series(htmlCopy))
+    setTimeout(function() {
+        console.log('监听完成')
+        done()
+    },1000)
+    
+}
+
+function createWebserver(done) {
+    src( 'dist' )
+        .pipe(webserver({
+            livereload: true, // 启用LiveReload
+            open: true, // 服务器启动时自动打开网页
+            open: '/pages/index/index.html'
+        }))
+
+        done()
+}
+
+exports.default = series(series(htmlCopy, jsConcat, cssConcat), watcher, createWebserver);
+
+exports.prod = series(cleanAll, htmlCopy, jsConcat, cssConcat)
+
+exports.test = series(cleanAll, htmlCopy, jsConcat, cssConcat)
+
+
 
 

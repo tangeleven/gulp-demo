@@ -14,10 +14,14 @@
     "gulp": "^4.0.2",
     "gulp-babel": "^8.0.0",
     "gulp-clean": "^0.4.0",
+    "gulp-clean-css": "^4.2.0",
     "gulp-concat": "^2.6.1",
     "gulp-file-include": "^2.1.1",
     "gulp-html-replace": "^1.6.2",
-    "gulp-uglify": "^3.0.2"
+    "gulp-livereload": "^4.0.2",
+    "gulp-sourcemaps": "^2.6.5",
+    "gulp-uglify": "^3.0.2",
+    "gulp-webserver": "^0.9.1"
   },
   "dependencies": {
     "del": "^5.1.0"
