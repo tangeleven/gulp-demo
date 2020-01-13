@@ -1,0 +1,1 @@
+exports.entry = {"entry":"haha.html"}
